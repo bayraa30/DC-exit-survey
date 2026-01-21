@@ -399,7 +399,6 @@ def confirmEmployeeActions(empcode):
                     "Компани": emp["COMPANYNAME"],
                     "Алба хэлтэс": emp["DEPNAME"],
                     "Албан тушаал": emp["POSNAME"],
-                    "Овог": emp["LASTNAME"],
                     "Нэр": emp["FIRSTNAME"],
                     "Ажилласан хугацаа": tenure_str,
                 }
@@ -538,7 +537,7 @@ def init_from_link_token():
 
         # 2) Load employee info from EMP table
         emp_df = session.sql(f"""
-            SELECT EMPCODE, LASTNAME, FIRSTNAME, COMPANYNAME, HEADDEPNAME, POSNAME
+            SELECT EMPCODE, FIRSTNAME, COMPANYNAME, HEADDEPNAME, POSNAME
             FROM {DATABASE_NAME}.{SCHEMA_NAME}.{EMPLOYEE_TABLE}
             WHERE EMPCODE = '{empcode}'
             LIMIT 1
@@ -559,7 +558,6 @@ def init_from_link_token():
             "Компани": row["COMPANYNAME"],
             "Алба хэлтэс": row["HEADDEPNAME"],
             "Албан тушаал": row["POSNAME"],
-            "Овог": row["LASTNAME"],
             "Нэр": row["FIRSTNAME"],
         }
         st.session_state.survey_type = survey_type
@@ -707,7 +705,6 @@ def table_view_page():
                     WHEN i.EMPCODE IS NOT NULL THEN '✅'
                     ELSE '❌'
                 END                                AS INTERVIEW_DONE,
-                e.LASTNAME,
                 e.FIRSTNAME,
                 e.COMPANYNAME,
                 e.DEPNAME,
@@ -727,7 +724,6 @@ def table_view_page():
                 "SUBMITTED_AT": "Бөглөсөн огноо",
                 "SURVEY_DONE": "Судалгаа бөглөсөн",
                 "INTERVIEW_DONE": "Ярилцлага өгсөн",
-                "LASTNAME": "Овог",
                 "FIRSTNAME": "Нэр",
                 "COMPANYNAME": "Компани",
                 "DEPNAME": "Хэлтэс",
@@ -776,7 +772,6 @@ def interview_table_page():
             SELECT
                 s.EMPCODE,
                 s.SUBMITTED_AT,
-                e.LASTNAME,
                 e.FIRSTNAME,
                 e.COMPANYNAME,
                 e.DEPNAME,
@@ -799,7 +794,6 @@ def interview_table_page():
             df.rename(columns={
                 "EMPCODE": "Ажилтны код",
                 "SUBMITTED_AT": "Бөглөсөн огноо",
-                "LASTNAME": "Овог",
                 "FIRSTNAME": "Нэр",
                 "COMPANYNAME": "Компани",
                 "DEPNAME": "Хэлтэс",
@@ -859,7 +853,6 @@ def interview_table_page():
 
             row = selected.iloc[0]
             st.session_state.selected_EMPCODE = row["Ажилтны код"]
-            st.session_state.selected_emp_lastname = row["Овог"]
             st.session_state.selected_emp_firstname = row["Нэр"]
 
             st.session_state.page = "interview_0"
@@ -1015,7 +1008,7 @@ def show_survey_answers_page(empcode: str):
         # Columns you do NOT want to show
         hide_cols = {
             "EMPCODE", "SURVEY_TYPE", "SUBMITTED_AT", 
-            "FIRSTNAME", "LASTNAME"  # if included
+            "FIRSTNAME"
         }
 
         # Show everything else
@@ -1143,7 +1136,6 @@ def interview_intro():
     st.title("🎤 Гарах ярилцлага – Танилцуулга")
 
     EMPCODE = st.session_state.get("selected_EMPCODE", "")
-    lname = st.session_state.get("selected_emp_lastname", "")
     fname = st.session_state.get("selected_emp_firstname", "")
 
     if EMPCODE:
@@ -1243,7 +1235,6 @@ def interview_form():
 # END PAGE --------------------------------------------------------------
 def interview_end():
     EMPCODE = st.session_state.get("selected_EMPCODE", "")
-    lname = st.session_state.get("selected_emp_lastname", "")
     fname = st.session_state.get("selected_emp_firstname", "")
     submitted_at = st.session_state.get("interview_submitted_at", None)
 
