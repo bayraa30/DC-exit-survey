@@ -877,9 +877,9 @@ def interview_table_page():
             ),
             interviewed AS (
                 SELECT DISTINCT
-                    EMP_CODE
+                    EMPCODE
                 FROM {db}.{schema}.{interview_tbl}
-                WHERE EMP_CODE IS NOT NULL
+                WHERE EMPCODE IS NOT NULL
             )
             SELECT
                 s.EMPCODE,
@@ -890,10 +890,10 @@ def interview_table_page():
                 e.POSNAME
             FROM survey s
             LEFT JOIN interviewed i
-                ON i.EMP_CODE = s.EMPCODE
+                ON i.EMPCODE = s.EMPCODE
             LEFT JOIN {db}.{schema}.DC_EMP_DATA e
                 ON e.EMPCODE = s.EMPCODE
-            WHERE i.EMP_CODE IS NULL
+            WHERE i.EMPCODE IS NULL
             ORDER BY s.SUBMITTED_AT DESC
             """
 
@@ -1179,8 +1179,8 @@ def submit_interview_answers():
         schema = SCHEMA_NAME
         table = INTERVIEW_TABLE
 
-        emp_code = st.session_state.get("selected_emp_code")
-        if not emp_code:
+        EMPCODE = st.session_state.get("selected_EMPCODE")
+        if not EMPCODE:
             st.error("Ажилтны код олдсонгүй. Хүснэгтээс ажилтан сонгосон эсэхээ шалгана уу.")
             return False
 
@@ -1214,7 +1214,7 @@ def submit_interview_answers():
 
         insert_sql = f"""
             INSERT INTO {db}.{schema}.{table} (
-                EMP_CODE,
+                EMPCODE,
                 SUBMITTED_AT,
                 Q1_SCORE, Q1_DETAIL,
                 Q2_SCORE, Q2_DETAIL,
@@ -1225,7 +1225,7 @@ def submit_interview_answers():
                 Q7_FACTORS
             )
             VALUES (
-                {_sql_str(emp_code)},
+                {_sql_str(EMPCODE)},
                 {_sql_str(submitted_at)},
                 {_sql_str(q1_score)},  {_sql_str(q1_detail)},
                 {_sql_str(q2_score)},  {_sql_str(q2_detail)},
