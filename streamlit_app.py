@@ -492,7 +492,7 @@ def confirmEmployeeActions(empcode):
 def init_from_link_token():
     """
     If URL has ?mode=link&token=..., we:
-    - Look up EMPCODE + SURVEY_TYPE from SKYTEL_SURVEY_LINKS
+    - Look up EMPCODE + SURVEY_TYPE from DC_SURVEY_LINKS
     - Load employee info
     - Fill session_state
     - Jump to page 2 (intro)
@@ -671,7 +671,7 @@ def login_page():
             else:
                 st.error("❌ Нэвтрэх нэр эсвэл нууц үг буруу байна.")
 
-st.write("DEBUG: RUNNING SKYTEL VERSION - 2026-01-20")
+st.write("DEBUG: RUNNING DC VERSION - 2026-01-21")
 def table_view_page():
     import pandas as pd
     logo()
@@ -689,7 +689,7 @@ def table_view_page():
                 SELECT
                     EMPCODE,
                     SUBMITTED_AT
-                FROM {db}.{schema}.SKYTEL_SURVEY_ANSWERS
+                FROM {db}.{schema}.DC_SURVEY_ANSWERS
                 WHERE SUBMITTED_AT IS NOT NULL
             ),
             interviews AS (
@@ -712,7 +712,7 @@ def table_view_page():
             FROM answers a
             LEFT JOIN interviews i
                 ON i.EMPCODE = a.EMPCODE
-            LEFT JOIN {db}.{schema}.SKYTEL_EMP_DATA_FINAL e
+            LEFT JOIN {db}.{schema}.DC_EMP_DATA e
                 ON e.EMPCODE = a.EMPCODE
             ORDER BY a.SUBMITTED_AT DESC
             """
@@ -762,7 +762,7 @@ def interview_table_page():
                 SELECT
                     EMPCODE    AS EMPCODE,
                     SUBMITTED_AT
-                FROM {db}.{schema}.SKYTEL_SURVEY_ANSWERS
+                FROM {db}.{schema}.DC_SURVEY_ANSWERS
                 WHERE SUBMITTED_AT IS NOT NULL
             ),
             interviewed AS (
@@ -779,7 +779,7 @@ def interview_table_page():
             FROM survey s
             LEFT JOIN interviewed i
                 ON i.EMPCODE = s.EMPCODE
-            LEFT JOIN {db}.{schema}.SKYTEL_EMP_DATA_FINAL e
+            LEFT JOIN {db}.{schema}.DC_EMP_DATA e
                 ON e.EMPCODE = s.EMPCODE
             WHERE i.EMPCODE IS NULL
             ORDER BY s.SUBMITTED_AT DESC
@@ -975,7 +975,7 @@ def show_survey_answers_page(empcode: str):
 
         q = f"""
         SELECT *
-        FROM {db}.{schema}.SKYTEL_SURVEY_ANSWERS
+        FROM {db}.{schema}.DC_SURVEY_ANSWERS
         WHERE EMPCODE = '{empcode}'
         ORDER BY SUBMITTED_AT DESC
         LIMIT 1
