@@ -11,9 +11,9 @@ def get_session():
     return Session.builder.configs(st.secrets["connections"]["snowflake"]).create()
 
 # ---- CONFIGURATION ----
-COMPANY_NAME = "СКАЙТЭЛ ГРУПП"
-SCHEMA_NAME = "SKYTEL"
-EMPLOYEE_TABLE = "SKYTEL_EMP_DATA_FINAL"
+COMPANY_NAME = "Дижитал концепт ХХК"
+SCHEMA_NAME = "DC"
+EMPLOYEE_TABLE = "DC_EMP_DATA"
 LOGO_URL = "https://i.imgur.com/DgCfZ9B.png"
 
 # --- Snowflake credentials (replace with your actual or use Streamlit secrets) ---
@@ -26,14 +26,14 @@ SNOWFLAKE_DATABASE = "CDNA_HR_DATA"
 
 # ---- CONFIG ----
 
-COMPANY_NAME = "СКАЙТЭЛ ГРУПП"
-SCHEMA_NAME = "SKYTEL"
-EMPLOYEE_TABLE = "SKYTEL_EMP_DATA_FINAL"
+COMPANY_NAME = "Дижитал концепт ХХК"
+SCHEMA_NAME = "DC"
+EMPLOYEE_TABLE = "DC_EMP_DATA"
 ANSWER_TABLE = f"{SCHEMA_NAME}_SURVEY_ANSWERS"
 DATABASE_NAME = "CDNA_HR_DATA"
 LOGO_URL = "https://i.imgur.com/DgCfZ9B.png"
 LINK_TABLE = f"{SCHEMA_NAME}_SURVEY_LINKS"  # -> SKYTEL_SURVEY_LINKS
-BASE_URL = "https://skytel-exit-survey-jwscbinlhml4eiwahwqkfq.streamlit.app/"  
+BASE_URL = "https://dc-exit-survey-4fiamjsnjbbbxmej4hp5ik.streamlit.app/"  
 # BASE_URL = "http://localhost:8501/"  
 INTERVIEW_TABLE = f"{SCHEMA_NAME}_INTERVIEW_ANSWERS"
 
