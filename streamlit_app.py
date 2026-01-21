@@ -855,6 +855,104 @@ def interview_table_page():
 
             st.session_state.page = "interview_0"
             st.rerun()
+
+def interview_table_page():
+    import pandas as pd
+    st.title("🎤 Гарах ярилцлагад оролцох ажилтнаа сонгоно уу")
+
+    try:
+        with st.spinner("Loading"):
+            session = get_session()
+            schema = SCHEMA_NAME
+            db = DATABASE_NAME
+            interview_tbl = INTERVIEW_TABLE
+
+            q = f"""
+            WITH survey AS (
+                SELECT
+                    EMPCODE,
+                    SUBMITTED_AT
+                FROM {db}.{schema}.DC_SURVEY_ANSWERS
+                WHERE SUBMITTED_AT IS NOT NULL
+            ),
+            interviewed AS (
+                SELECT DISTINCT
+                    EMP_CODE
+                FROM {db}.{schema}.{interview_tbl}
+                WHERE EMP_CODE IS NOT NULL
+            )
+            SELECT
+                s.EMPCODE,
+                s.SUBMITTED_AT,
+                e.FIRSTNAME,
+                e.COMPANYNAME,
+                e.DEPNAME,
+                e.POSNAME
+            FROM survey s
+            LEFT JOIN interviewed i
+                ON i.EMP_CODE = s.EMPCODE
+            LEFT JOIN {db}.{schema}.DC_EMP_DATA e
+                ON e.EMPCODE = s.EMPCODE
+            WHERE i.EMP_CODE IS NULL
+            ORDER BY s.SUBMITTED_AT DESC
+            """
+
+            df = session.sql(q).to_pandas()
+
+        if "SUBMITTED_AT" in df.columns:
+            df["SUBMITTED_AT"] = pd.to_datetime(df["SUBMITTED_AT"]).dt.date
+
+        df.rename(columns={
+            "EMPCODE": "Ажилтны код",
+            "SUBMITTED_AT": "Бөглөсөн огноо",
+            "FIRSTNAME": "Нэр",
+            "COMPANYNAME": "Компани",
+            "DEPNAME": "Хэлтэс",
+            "POSNAME": "Албан тушаал",
+        }, inplace=True)
+
+        if df.empty:
+            st.info("Ярилцлагад оруулаагүй судалгаатай ажилтан алга байна.")
+            if st.button("Буцах цэс рүү"):
+                st.session_state.page = -0.5
+                st.rerun()
+            return
+
+        base_cols = ["Ажилтны код", "Нэр", "Компани", "Хэлтэс", "Албан тушаал", "Бөглөсөн огноо"]
+        df_display = df[base_cols].copy()
+        df_display["Сонгох"] = False
+
+        ordered_cols = ["Сонгох", "Бөглөсөн огноо", "Ажилтны код", "Нэр", "Компани", "Хэлтэс", "Албан тушаал"]
+        df_display = df_display[ordered_cols]
+
+        edited = st.data_editor(
+            df_display,
+            key="interview_table_editor",
+            width="stretch",
+            num_rows="fixed"
+        )
+
+    except Exception as e:
+        st.error(f"❌ Snowflake холболтын алдаа: {e}")
+        return
+
+    # ✅ keep continue outside try/spinner
+    if st.button("Үргэлжлүүлэх → Ярилцлагын танилцуулга"):
+        selected = edited[edited["Сонгох"] == True]
+
+        if selected.empty:
+            st.warning("Та ярилцлага хийх нэг ажилтныг сонгоно уу.")
+            return
+        if len(selected) > 1:
+            st.warning("Нэг ажилтан сонгоно уу.")
+            return
+
+        row = selected.iloc[0]
+        st.session_state.selected_EMPCODE = row["Ажилтны код"]
+        st.session_state.selected_emp_firstname = row["Нэр"]
+        st.session_state.page = "interview_0"
+        st.rerun()
+
 # ---- DIRECTORY PAGE ----
 def directory_page():
 
