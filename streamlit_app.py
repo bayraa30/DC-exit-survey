@@ -381,7 +381,7 @@ def confirmEmployeeActions(empcode):
                 emp = match[0]
 
                 # Use WORK_START_DATE (exists in your table)
-                hire_dt = _to_date_safe(emp["WORK_START_DATE"])
+                hire_dt = _to_date_safe(emp["FIRSTHIREDDATE"])
                 tenure_str = _fmt_tenure(hire_dt, date.today()) if hire_dt else ""
 
                 if hire_dt:
