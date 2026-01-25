@@ -34,7 +34,7 @@ DATABASE_NAME = "CDNA_HR_DATA"
 LOGO_URL = "static/images/DC_logo.png"
 LINK_TABLE = f"{SCHEMA_NAME}_SURVEY_LINKS"  # -> SKYTEL_SURVEY_LINKS
 BASE_URL = "https://dc-exit-survey-4fiamjsnjbbbxmej4hp5ik.streamlit.app/"  
-# BASE_URL = "http://localhost:8501/"  
+# BASE_URL = "http://localhost:8503/"  
 INTERVIEW_TABLE = f"{SCHEMA_NAME}_INTERVIEW_ANSWERS"
 
 
@@ -515,11 +515,17 @@ def init_from_link_token():
 
     mode = params.get("mode", None)
     token = params.get("token", None)
+    empcode = params.get('empcode', None)
 
     start_idx = int(params.get("start_idx", 0))
     skip_idx = int(params.get("skip_idx",0))
     total_questions = int(params.get("total_questions", 0))
 
+    if mode == 'view_survey' and empcode:
+        st.session_state.logged_in = True       # 🔑 bypass HR login
+        st.session_state.page = 'show_survey_answers'
+        st.session_state.survey_answer_empcode = empcode
+        return
 
     # if employee confirmed return
     if "emp_confirmed" in st.session_state and st.session_state.emp_confirmed:
@@ -1069,67 +1075,67 @@ def show_survey_answers_page(empcode: str):
     if not empcode:
         st.error("Ажилтны код дутуу байна.")
         return
+    with st.spinner('loading'):
+        try:
+            session = get_session()
+            db = DATABASE_NAME
+            schema = SCHEMA_NAME
 
-    try:
-        session = get_session()
-        db = DATABASE_NAME
-        schema = SCHEMA_NAME
+            q = f"""
+            SELECT *
+            FROM {db}.{schema}.DC_SURVEY_ANSWERS
+            WHERE EMPCODE = '{empcode}'
+            ORDER BY SUBMITTED_AT DESC
+            LIMIT 1
+            """
+            df = session.sql(q).to_pandas()
 
-        q = f"""
-        SELECT *
-        FROM {db}.{schema}.DC_SURVEY_ANSWERS
-        WHERE EMPCODE = '{empcode}'
-        ORDER BY SUBMITTED_AT DESC
-        LIMIT 1
-        """
-        df = session.sql(q).to_pandas()
+            if df.empty:
+                st.warning(f"Энэ ажилтны ({empcode}) судалгааны хариу олдсонгүй.")
+                return
 
-        if df.empty:
-            st.warning(f"Энэ ажилтны ({empcode}) судалгааны хариу олдсонгүй.")
-            return
+            row = df.iloc[0]
 
-        row = df.iloc[0]
+            # ---- Top info section ----
+            st.markdown("### 👤 Ажилтны мэдээлэл")
+            st.write(f"**Ажилтны код:** {row.get('EMPCODE', '')}")
+            
+            if "SURVEY_TYPE" in row:
+                st.write(f"**Судалгааны төрөл:** {row.get('SURVEY_TYPE', '')}")
 
-        # ---- Top info section ----
-        st.markdown("### 👤 Ажилтны мэдээлэл")
-        st.write(f"**Ажилтны код:** {row.get('EMPCODE', '')}")
-        
-        if "SURVEY_TYPE" in row:
-            st.write(f"**Судалгааны төрөл:** {row.get('SURVEY_TYPE', '')}")
+            if "SUBMITTED_AT" in row:
+                try:
+                    submitted = pd.to_datetime(row["SUBMITTED_AT"])
+                    st.write(f"**Илгээсэн огноо:** {submitted.date()}")
+                except:
+                    st.write(f"**Илгээсэн огноо:** {row.get('SUBMITTED_AT', '')}")
 
-        if "SUBMITTED_AT" in row:
-            try:
-                submitted = pd.to_datetime(row["SUBMITTED_AT"])
-                st.write(f"**Илгээсэн огноо:** {submitted.date()}")
-            except:
-                st.write(f"**Илгээсэн огноо:** {row.get('SUBMITTED_AT', '')}")
-
-        st.markdown("---")
-        st.markdown("### 📝 Судалгааны дэлгэрэнгүй хариу")
-
-        # Columns you do NOT want to show
-        hide_cols = {
-            "EMPCODE", "SURVEY_TYPE", "SUBMITTED_AT", 
-            "FIRSTNAME"
-        }
-
-        # Show everything else
-        show_cols = [c for c in row.index if c not in hide_cols]
-
-        for col in show_cols:
-            val = row[col]
-
-            # Convert NULL/None to —
-            if val in [None, "", "null", "NULL"]:
-                val = "—"
-
-            # Render as section per question
-            st.markdown(f"**{col.replace('_', ' ')}**")
-            st.write(val)
             st.markdown("---")
+            st.markdown("### 📝 Судалгааны дэлгэрэнгүй хариу")
 
-    except Exception as e:
-        st.error(f"❌ Судалгааны хариу унших үед алдаа гарлаа: {e}")
+            # Columns you do NOT want to show
+            hide_cols = {
+                "EMPCODE", "SURVEY_TYPE", "SUBMITTED_AT", 
+                "FIRSTNAME"
+            }
+
+            # Show everything else
+            show_cols = [c for c in row.index if c not in hide_cols]
+
+            for col in show_cols:
+                val = row[col]
+
+                # Convert NULL/None to —
+                if val in [None, "", "null", "NULL"]:
+                    val = "—"
+
+                # Render as section per question
+                st.markdown(f"**{col.replace('_', ' ')}**")
+                st.write(val)
+                st.markdown("---")
+
+        except Exception as e:
+            st.error(f"❌ Судалгааны хариу унших үед алдаа гарлаа: {e}")
 # ---Thankyou
 def final_thank_you():
     col1, col2 = st.columns(2)
@@ -1288,7 +1294,7 @@ def interview_intro():
     fname = st.session_state.get("selected_emp_firstname", "")
 
     if EMPCODE:
-        st.markdown(f"**Сонгосон ажилтан:** {EMPCODE} – {lname} {fname}")
+        st.markdown(f"**Сонгосон ажилтан:** {EMPCODE} – {fname}")
 
     st.write(
         "Доорх ярилцлагын асуултууд нь ажилтны гарах шийдвэрийн шалтгаан, "
@@ -3127,6 +3133,11 @@ elif st.session_state.page == "survey_end":
     with st.spinner("Submitting answers"):
         if submit_answers():
             final_thank_you()
+
+elif st.session_state.page == "show_survey_answers":
+    empcode = st.session_state.survey_answer_empcode 
+    if empcode:
+        show_survey_answers_page(empcode)
 
 
 elif st.session_state.page == "interview_0":
